@@ -21,7 +21,6 @@ def test_root_endpoint(client: TestClient):
 
 
 def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
-    # 1. Upload KML
     with open(sample_kml_path, "rb") as f:
         upload_resp = client.post(
             "/api/files/",
@@ -38,7 +37,6 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
 
     file_id = upload_data["id"]
 
-    # 2. Query File Info GET /api/files/{id}/
     info_resp = client.get(f"/api/files/{file_id}/")
     assert info_resp.status_code == 200
     info_data = info_resp.json()
@@ -48,12 +46,10 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
     assert info_data["crs"] == "EPSG:4326"
     assert info_data["status"] == "COMPLETED"
 
-    # Also test without trailing slash
     info_no_slash = client.get(f"/api/files/{file_id}")
     assert info_no_slash.status_code == 200
     assert info_no_slash.json()["id"] == file_id
 
-    # 3. Query Measurements GET /api/files/{id}/measurements/
     meas_resp = client.get(f"/api/files/{file_id}/measurements/")
     assert meas_resp.status_code == 200
     meas_data = meas_resp.json()
@@ -63,7 +59,6 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
     assert meas_data["crs"] == "EPSG:4326"
     assert len(meas_data["features"]) == 3
 
-    # Check Summary
     summary = meas_data["summary"]
     assert summary["total_features"] == 3
     assert summary["polygon_count"] == 1
@@ -74,10 +69,8 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
     assert summary["total_area"] == summary["total_area_sq_meters"]
     assert summary["total_length"] == summary["total_length_meters"]
 
-    # Verify features and measurements
     features_by_type = {f["geometry_type"]: f for f in meas_data["features"]}
 
-    # Polygon has area
     poly_feat = features_by_type["Polygon"]
     assert poly_feat["feature_id"] is not None
     assert poly_feat["id"] is not None
@@ -86,9 +79,8 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
     assert poly_feat["measurement"]["unit"] == "square_meters"
     assert poly_feat["measurement"]["value"] > 0
     assert poly_feat["measurement"]["area"] == poly_feat["measurement"]["value"]
-    assert poly_feat["projected_crs"] == "EPSG:32643"  # Converted to UTM 43N
+    assert poly_feat["projected_crs"] == "EPSG:32643"
 
-    # LineString has length
     line_feat = features_by_type["LineString"]
     assert line_feat["feature_id"] is not None
     assert line_feat["id"] is not None
@@ -98,7 +90,6 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
     assert line_feat["measurement"]["value"] > 0
     assert line_feat["measurement"]["length"] == line_feat["measurement"]["value"]
 
-    # Point has no measurement (graceful handling)
     point_feat = features_by_type["Point"]
     assert point_feat["measurement"]["supported"] is False
     assert point_feat["measurement"]["type"] is None
@@ -107,7 +98,6 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
 
 
 def test_upload_and_measure_shapefile_flow(client: TestClient, sample_shapefile_path: Path):
-    # 1. Upload Zipped Shapefile
     with open(sample_shapefile_path, "rb") as f:
         upload_resp = client.post(
             "/api/files/",
@@ -120,7 +110,6 @@ def test_upload_and_measure_shapefile_flow(client: TestClient, sample_shapefile_
     assert upload_data["feature_count"] == 2
     assert upload_data["status"] == "COMPLETED"
 
-    # 2. Query Measurements
     meas_resp = client.get(f"/api/files/{file_id}/measurements/")
     assert meas_resp.status_code == 200
     meas_data = meas_resp.json()

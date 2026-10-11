@@ -10,7 +10,6 @@ from app.services.crs_service import CRSService
 
 logger = logging.getLogger(__name__)
 
-# WGS84 Geodetic calculator for ellipsoidal reference cross-validation
 wgs84_geod = pyproj.Geod(ellps="WGS84")
 
 
@@ -21,11 +20,7 @@ class MeasurementService:
     def calculate_measurement(
         cls, geometry: shapely.Geometry, source_crs: str
     ) -> tuple[MeasurementDetail, str | None]:
-        """
-        Calculates measurement for a given geometry.
-        Returns a tuple of (MeasurementDetail, projected_crs_used).
-        Handles Polygon, MultiPolygon, LineString, MultiLineString, Point, and unsupported types gracefully.
-        """
+        """Calculates measurement for a given geometry."""
         if geometry is None or geometry.is_empty:
             return (
                 MeasurementDetail(
@@ -45,7 +40,6 @@ class MeasurementService:
 
         geom_type = geometry.geom_type
 
-        # 1. Point / MultiPoint - explicit specification: no measurement required
         if geom_type in ("Point", "MultiPoint"):
             return (
                 MeasurementDetail(
@@ -63,7 +57,6 @@ class MeasurementService:
                 None,
             )
 
-        # 2. Polygon & MultiPolygon - Area calculation
         if geom_type in ("Polygon", "MultiPolygon"):
             try:
                 projected_crs = CRSService.determine_optimal_projected_crs(geometry, source_crs)
@@ -73,7 +66,6 @@ class MeasurementService:
                 hectares = round(area_sq_m / 10_000.0, 4)
                 sq_km = round(area_sq_m / 1_000_000.0, 6)
 
-                # Optional Geodesic calculation on WGS84 geometry
                 geodesic_area: float | None = None
                 try:
                     wgs_geom = (
@@ -125,7 +117,6 @@ class MeasurementService:
                     None,
                 )
 
-        # 3. LineString & MultiLineString - Length calculation
         if geom_type in ("LineString", "MultiLineString"):
             try:
                 projected_crs = CRSService.determine_optimal_projected_crs(geometry, source_crs)
@@ -134,7 +125,6 @@ class MeasurementService:
                 length_m = round(float(projected_geom.length), 4)
                 length_km = round(length_m / 1000.0, 4)
 
-                # Optional Geodesic calculation on WGS84 geometry
                 geodesic_len: float | None = None
                 try:
                     wgs_geom = (
@@ -183,7 +173,6 @@ class MeasurementService:
                     None,
                 )
 
-        # 4. Graceful handling of unsupported geometry types (e.g. GeometryCollection)
         return (
             MeasurementDetail(
                 supported=False,

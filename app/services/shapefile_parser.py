@@ -21,18 +21,13 @@ class ShapefileParser:
 
     @classmethod
     def parse_zip(cls, zip_file_path: Path) -> tuple[str, list[dict[str, Any]]]:
-        """
-        Extracts and parses a Shapefile from a zip archive.
-        Returns:
-            tuple[str, list[dict[str, Any]]]: (detected_crs, list of feature dictionaries)
-        """
+        """Extracts and parses a Shapefile from a zip archive."""
         temp_dir = Path(tempfile.mkdtemp(prefix="shp_extract_"))
         try:
             cls._safe_extract_zip(zip_file_path, temp_dir)
             shp_path = cls._find_shp_file(temp_dir)
             prj_path = shp_path.with_suffix(".prj")
 
-            # Extract CRS from .prj if available
             crs_str = CRSService.DEFAULT_GEOGRAPHIC_CRS
             if prj_path.exists():
                 try:
@@ -71,7 +66,6 @@ class ShapefileParser:
         """Locates the primary .shp file in the extracted directory tree."""
         shp_candidates = list(extract_dir.rglob("*.shp"))
         if not shp_candidates:
-            # Check case-insensitive
             shp_candidates = [p for p in extract_dir.rglob("*") if p.suffix.lower() == ".shp"]
 
         if not shp_candidates:
@@ -80,7 +74,6 @@ class ShapefileParser:
                 "Ensure the zip contains .shp, .shx, and .dbf files."
             )
 
-        # Prefer non-hidden, non-macOS __MACOSX files
         valid_candidates = [p for p in shp_candidates if "__MACOSX" not in p.parts and not p.name.startswith(".")]
         if not valid_candidates:
             valid_candidates = shp_candidates
@@ -94,13 +87,11 @@ class ShapefileParser:
 
         try:
             with shapefile.Reader(str(shp_path), encoding="utf-8", encodingErrors="replace") as sf:
-                fields = [f[0] for f in sf.fields[1:]]  # Exclude deletion flag
+                fields = [f[0] for f in sf.fields[1:]]
 
                 for index, shape_record in enumerate(sf.shapeRecords()):
-                    # Extract attributes
                     record_dict = dict(zip(fields, shape_record.record))
 
-                    # Extract geometry
                     shape_geo = shape_record.shape.__geo_interface__
                     if not shape_geo or not shape_geo.get("coordinates"):
                         continue
@@ -109,7 +100,6 @@ class ShapefileParser:
                     if geom.is_empty:
                         continue
 
-                    # Ensure valid geometry if possible
                     if not geom.is_valid:
                         geom = shapely.make_valid(geom)
 

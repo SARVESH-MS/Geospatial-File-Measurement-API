@@ -34,9 +34,7 @@ class FileProcessingService:
         file_size_bytes: int,
         db: Session,
     ) -> FileInfoResponse:
-        """
-        Parses geospatial file, calculates feature measurements, and persists all records to database.
-        """
+        """Parses geospatial file, calculates feature measurements, and persists all records to database."""
         file_record = UploadedFile(
             id=file_id,
             filename=original_filename,
@@ -48,7 +46,6 @@ class FileProcessingService:
         db.commit()
 
         try:
-            # Parse based on file type
             if file_type == "shapefile":
                 crs_str, parsed_features = ShapefileParser.parse_zip(file_path)
             else:
@@ -57,7 +54,6 @@ class FileProcessingService:
             file_record.crs = crs_str
             file_record.feature_count = len(parsed_features)
 
-            # Calculate measurements and store feature records
             for feat in parsed_features:
                 measurement, projected_crs = MeasurementService.calculate_measurement(
                     feat["shapely_geom"], crs_str
@@ -151,7 +147,6 @@ class FileProcessingService:
             else:
                 unsupported_count += 1
 
-            # Reconstruct MeasurementDetail schema
             meas_dict = f.measurement_details or {}
             meas_detail = MeasurementDetail(
                 supported=f.is_supported,

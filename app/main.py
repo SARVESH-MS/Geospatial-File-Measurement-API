@@ -31,7 +31,6 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS middleware for local frontend/developer flexibility
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -40,10 +39,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register custom exception handlers
 register_exception_handlers(app)
 
-# Include routes
 app.include_router(files_router)
 app.include_router(health_router)
 

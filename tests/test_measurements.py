@@ -5,7 +5,6 @@ from app.services.measurement_service import MeasurementService
 
 
 def test_polygon_area_calculation():
-    # Polygon in WGS84
     poly = shapely.Polygon([(77.590, 12.970), (77.595, 12.970), (77.595, 12.974), (77.590, 12.974)])
     meas, proj_crs = MeasurementService.calculate_measurement(poly, "EPSG:4326")
 
@@ -16,7 +15,7 @@ def test_polygon_area_calculation():
     assert meas.value is not None
     assert meas.area == meas.value
     assert meas.geodesic_value is not None and meas.geodesic_value > 0
-    assert meas.value > 100_000  # Physically realistic parcel area in m²
+    assert meas.value > 100_000
     assert "m²" in (meas.display or "")
     assert proj_crs == "EPSG:32643"
 
@@ -34,7 +33,6 @@ def test_multipolygon_area_calculation():
 
 
 def test_linestring_length_calculation():
-    # ~500m LineString
     line = shapely.LineString([(77.590, 12.970), (77.595, 12.974)])
     meas, proj_crs = MeasurementService.calculate_measurement(line, "EPSG:4326")
 
@@ -45,7 +43,7 @@ def test_linestring_length_calculation():
     assert meas.value is not None
     assert meas.length == meas.value
     assert meas.geodesic_value is not None and meas.geodesic_value > 0
-    assert 500 < meas.value < 800  # meters
+    assert 500 < meas.value < 800
     assert "m" in (meas.display or "")
 
 
@@ -62,7 +60,6 @@ def test_multilinestring_length_calculation():
 
 
 def test_point_handling_graceful():
-    # Per requirement: "Point: No measurement is required."
     point = shapely.Point(77.592, 12.971)
     meas, proj_crs = MeasurementService.calculate_measurement(point, "EPSG:4326")
 
@@ -74,7 +71,6 @@ def test_point_handling_graceful():
 
 
 def test_unsupported_geometry_graceful():
-    # GeometryCollection or empty geometry should not crash
     p = shapely.Point(77.592, 12.971)
     l = shapely.LineString([(77.590, 12.970), (77.591, 12.971)])
     gc = shapely.GeometryCollection([p, l])

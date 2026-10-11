@@ -15,7 +15,7 @@ class UploadedFile(Base):
 
     id: Mapped[str] = mapped_column(sa.String(36), primary_key=True, index=True)
     filename: Mapped[str] = mapped_column(sa.String(255), nullable=False)
-    file_type: Mapped[str] = mapped_column(sa.String(32), nullable=False)  # shapefile or kml
+    file_type: Mapped[str] = mapped_column(sa.String(32), nullable=False)
     file_size_bytes: Mapped[int] = mapped_column(sa.BigInteger, nullable=False, default=0)
     feature_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
     crs: Mapped[str] = mapped_column(sa.String(64), nullable=False, default="EPSG:4326")
@@ -57,10 +57,9 @@ class FeatureRecord(Base):
     properties: Mapped[dict[str, Any]] = mapped_column(sa.JSON, nullable=False, default=dict)
     crs: Mapped[str] = mapped_column(sa.String(64), nullable=False)
 
-    # Measurement details
     is_supported: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=False)
     projected_crs: Mapped[str | None] = mapped_column(sa.String(64), nullable=True)
-    measurement_type: Mapped[str | None] = mapped_column(sa.String(32), nullable=True)  # area, length, or None
+    measurement_type: Mapped[str | None] = mapped_column(sa.String(32), nullable=True)
     measurement_value: Mapped[float | None] = mapped_column(sa.Float, nullable=True)
     measurement_unit: Mapped[str | None] = mapped_column(sa.String(32), nullable=True)
     measurement_details: Mapped[dict[str, Any] | None] = mapped_column(sa.JSON, nullable=True)

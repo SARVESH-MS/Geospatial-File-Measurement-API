@@ -17,16 +17,12 @@ class StorageService:
 
     @classmethod
     def generate_file_id(cls) -> str:
-        """Generate a clean, collision-resistant identifier (e.g. 'abc123def456')."""
+        """Generate a clean identifier."""
         return secrets.token_hex(4)
 
     @classmethod
     async def save_upload(cls, upload_file: UploadFile) -> tuple[str, Path, str, int]:
-        """
-        Validates and saves an uploaded file stream to the storage directory.
-        Returns:
-            tuple[str, Path, str, int]: (file_id, saved_path, file_type, size_in_bytes)
-        """
+        """Validates and saves an uploaded file stream to the storage directory."""
         filename = upload_file.filename or "uploaded_file"
         suffix = Path(filename).suffix.lower()
 
@@ -37,13 +33,12 @@ class StorageService:
         file_type = "shapefile" if suffix == ".zip" else "kml"
         destination_path = settings.UPLOAD_DIR / f"{file_id}_{Path(filename).name}"
 
-        # Stream file to disk and enforce size limit
         total_bytes = 0
         max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
         try:
             with open(destination_path, "wb") as buffer:
-                while chunk := await upload_file.read(1024 * 1024):  # 1MB chunks
+                while chunk := await upload_file.read(1024 * 1024):
                     total_bytes += len(chunk)
                     if total_bytes > max_bytes:
                         raise FileSizeLimitExceededError(settings.MAX_UPLOAD_SIZE_MB)

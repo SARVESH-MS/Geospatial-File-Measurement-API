@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import settings
 from app.models.base import Base
 
-# SQLite configuration with check_same_thread disabled for multi-threaded worker compatibility
 connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(

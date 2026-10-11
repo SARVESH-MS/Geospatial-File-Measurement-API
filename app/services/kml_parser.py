@@ -17,15 +17,11 @@ logger = logging.getLogger(__name__)
 class KMLParser:
     """Parses OGC KML documents into structured geospatial features."""
 
-    KML_DEFAULT_CRS = CRSService.DEFAULT_GEOGRAPHIC_CRS  # EPSG:4326 by OGC specification
+    KML_DEFAULT_CRS = CRSService.DEFAULT_GEOGRAPHIC_CRS
 
     @classmethod
     def parse_file(cls, kml_file_path: Path) -> tuple[str, list[dict[str, Any]]]:
-        """
-        Parses a KML file into features and standard CRS.
-        Returns:
-            tuple[str, list[dict[str, Any]]]: ("EPSG:4326", list of feature dictionaries)
-        """
+        """Parses a KML file into features and standard CRS."""
         try:
             tree = dET.parse(str(kml_file_path))
             root = tree.getroot()
@@ -51,9 +47,7 @@ class KMLParser:
 
     @classmethod
     def _parse_coordinates(cls, coord_text: str | None) -> list[tuple[float, float]]:
-        """
-        Parses KML coordinate text 'lon,lat[,alt] lon,lat[,alt] ...' into a list of (lon, lat) tuples.
-        """
+        """Parses KML coordinate text into a list of (lon, lat) tuples."""
         if not coord_text:
             return []
 
@@ -72,7 +66,7 @@ class KMLParser:
 
     @classmethod
     def _parse_polygon(cls, poly_elem: Element) -> shapely.Polygon | None:
-        """Parses a KML Polygon element including outer boundary and optional inner rings (holes)."""
+        """Parses a KML Polygon element including outer boundary and optional inner rings."""
         shell_coords: list[tuple[float, float]] = []
         holes_coords: list[list[tuple[float, float]]] = []
 
@@ -149,7 +143,7 @@ class KMLParser:
 
     @classmethod
     def _extract_placemark_attributes(cls, placemark: Element) -> dict[str, Any]:
-        """Extracts metadata properties (<name>, <description>, <ExtendedData>) from a Placemark."""
+        """Extracts metadata properties from a Placemark."""
         props: dict[str, Any] = {}
 
         name_elem = cls._find_child(placemark, "name")
@@ -160,7 +154,6 @@ class KMLParser:
         if desc_elem is not None and desc_elem.text:
             props["description"] = desc_elem.text.strip()
 
-        # ExtendedData / Data or SimpleData
         ext_elem = cls._find_child(placemark, "ExtendedData")
         if ext_elem is not None:
             for child in ext_elem:
@@ -183,14 +176,12 @@ class KMLParser:
         features: list[dict[str, Any]] = []
         feature_index = 0
 
-        # Find all Placemark elements across the entire document
         placemarks = [el for el in root.iter() if cls._strip_ns(el.tag) == "Placemark"]
 
         for pm in placemarks:
             props = cls._extract_placemark_attributes(pm)
             geom: shapely.Geometry | None = None
 
-            # Look for geometry elements inside Placemark
             for child in pm:
                 ctag = cls._strip_ns(child.tag)
                 if ctag in ("Point", "LineString", "Polygon", "MultiGeometry"):

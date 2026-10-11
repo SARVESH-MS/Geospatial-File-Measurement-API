@@ -24,11 +24,7 @@ class CRSService:
 
     @classmethod
     def parse_crs(cls, crs_input: str | None) -> str:
-        """
-        Normalize and validate a CRS string or WKT.
-        Returns a canonical EPSG code string (e.g. 'EPSG:4326') or canonical WKT/PROJ string.
-        Falls back to EPSG:4326 if unrecognized or missing.
-        """
+        """Normalize and validate a CRS string or WKT."""
         if not crs_input or not crs_input.strip():
             return cls.DEFAULT_GEOGRAPHIC_CRS
 
@@ -39,7 +35,6 @@ class CRSService:
             epsg_code = parsed.to_epsg()
             if epsg_code:
                 return f"EPSG:{epsg_code}"
-            # If no EPSG code exists, return authoritative representation
             return parsed.to_string()
         except Exception as e:
             logger.warning("Could not parse CRS '%s': %s. Falling back to %s", crs_input, e, cls.DEFAULT_GEOGRAPHIC_CRS)
@@ -47,33 +42,18 @@ class CRSService:
 
     @classmethod
     def is_geographic(cls, crs_str: str) -> bool:
-        """Check whether a given CRS is geographic (uses angular coordinates like degrees)."""
+        """Check whether a given CRS is geographic."""
         try:
             crs = pyproj.CRS.from_user_input(crs_str)
             return crs.is_geographic
         except Exception:
-            # Conservative assumption: treat unparseable as geographic to prevent degree calculations
             return True
 
     @classmethod
     def determine_optimal_projected_crs(cls, geometry: shapely.Geometry, source_crs: str) -> str:
-        """
-        Determine the optimal projected coordinate reference system (in metric units)
-        for a geometry to calculate accurate areas and distances.
-
-        Strategy:
-        1. If the input CRS is already a non-distorting projected metric system (e.g. local UTM or State Plane),
-           retain it. If it is Web Mercator (EPSG:3857), reproject to local UTM to eliminate high-latitude area distortion.
-        2. If the input CRS is geographic (e.g. EPSG:4326 degrees):
-           - Inspect the geometry centroid (or envelope centroid) in WGS 84.
-           - Calculate the appropriate Universal Transverse Mercator (UTM) zone:
-             Zone = floor((longitude + 180) / 6) + 1
-             Hemisphere: Northern (EPSG:326XX) or Southern (EPSG:327XX).
-           - For polar latitudes (> 84°N or < -80°S), use Universal Polar Stereographic (UPS: EPSG:32661 / EPSG:32761).
-        """
+        """Determine optimal projected metric CRS based on centroid location."""
         try:
             crs_obj = pyproj.CRS.from_user_input(source_crs)
-            # If already projected in meters and not Web Mercator (which distorts areas severely away from equator)
             epsg = crs_obj.to_epsg()
             if crs_obj.is_projected and epsg != 3857:
                 axis_unit = crs_obj.axis_info[0].unit_name.lower() if crs_obj.axis_info else "metre"
@@ -82,20 +62,16 @@ class CRSService:
         except Exception as e:
             logger.debug("CRS inspection error: %s", e)
 
-        # Reproject centroid to WGS84 if needed
         lon, lat = cls._extract_wgs84_centroid(geometry, source_crs)
 
-        # Clamp latitude and normalize longitude
         lon = ((lon + 180) % 360) - 180
         lat = max(-90.0, min(90.0, lat))
 
-        # Handle Polar regions
         if lat > 84.0:
-            return "EPSG:32661"  # WGS 84 / UPS North
+            return "EPSG:32661"
         if lat < -80.0:
-            return "EPSG:32761"  # WGS 84 / UPS South
+            return "EPSG:32761"
 
-        # Standard UTM calculation
         zone = int(math.floor((lon + 180) / 6)) + 1
         zone = max(1, min(60, zone))
 
@@ -124,10 +100,7 @@ class CRSService:
     def transform_to_crs(
         cls, geometry: shapely.Geometry, source_crs: str, target_crs: str
     ) -> shapely.Geometry:
-        """
-        Transform a Shapely geometry from source_crs to target_crs.
-        Utilizes vectorized coordinates mapping and safely handles 2D and 3D geometries.
-        """
+        """Transform a Shapely geometry from source_crs to target_crs."""
         if source_crs == target_crs or geometry.is_empty:
             return geometry
 
