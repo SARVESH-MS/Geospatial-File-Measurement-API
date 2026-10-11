@@ -55,8 +55,7 @@ class FileSizeLimitExceededError(GeospatialAPIException):
         )
 
 
-# Support both Starlette versions cleanly
-STATUS_UNPROCESSABLE = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", status.HTTP_422_UNPROCESSABLE_ENTITY)
+STATUS_UNPROCESSABLE = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422)
 
 
 class CorruptedFileError(GeospatialAPIException):
