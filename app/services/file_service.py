@@ -159,6 +159,9 @@ class FileProcessingService:
                 value=f.measurement_value,
                 unit=f.measurement_unit,
                 display=meas_dict.get("display"),
+                area=meas_dict.get("area", f.measurement_value if f.measurement_type == "area" else None),
+                length=meas_dict.get("length", f.measurement_value if f.measurement_type == "length" else None),
+                geodesic_value=meas_dict.get("geodesic_value"),
                 status=meas_dict.get("status", "NOT_APPLICABLE"),
                 message=meas_dict.get("message"),
             )
@@ -166,6 +169,8 @@ class FileProcessingService:
             items.append(
                 FeatureMeasurementItem(
                     feature_index=f.feature_index,
+                    feature_id=f.feature_index,
+                    id=f.feature_index,
                     geometry_type=f.geometry_type,
                     geometry=f.geometry_geojson,
                     crs=f.crs,
@@ -183,6 +188,8 @@ class FileProcessingService:
             unsupported_count=unsupported_count,
             total_area_sq_meters=round(total_area, 4),
             total_length_meters=round(total_length, 4),
+            total_area=round(total_area, 4),
+            total_length=round(total_length, 4),
             total_area_hectares=round(total_area / 10_000.0, 4),
             total_length_km=round(total_length / 1000.0, 4),
         )

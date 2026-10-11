@@ -14,6 +14,8 @@ def test_polygon_area_calculation():
     assert meas.unit == "square_meters"
     assert meas.status == "CALCULATED"
     assert meas.value is not None
+    assert meas.area == meas.value
+    assert meas.geodesic_value is not None and meas.geodesic_value > 0
     assert meas.value > 100_000  # Physically realistic parcel area in m²
     assert "m²" in (meas.display or "")
     assert proj_crs == "EPSG:32643"
@@ -41,6 +43,8 @@ def test_linestring_length_calculation():
     assert meas.unit == "meters"
     assert meas.status == "CALCULATED"
     assert meas.value is not None
+    assert meas.length == meas.value
+    assert meas.geodesic_value is not None and meas.geodesic_value > 0
     assert 500 < meas.value < 800  # meters
     assert "m" in (meas.display or "")
 

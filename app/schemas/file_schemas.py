@@ -34,6 +34,9 @@ class MeasurementDetail(BaseModel):
     value: float | None = Field(None, description="Calculated metric value in SI units (m² or m)")
     unit: str | None = Field(None, description="Measurement unit (e.g. 'square_meters', 'meters')")
     display: str | None = Field(None, description="Human-readable formatted measurement with secondary units")
+    area: float | None = Field(None, description="Explicit area value in m² (populated for Polygons)")
+    length: float | None = Field(None, description="Explicit length value in meters (populated for LineStrings)")
+    geodesic_value: float | None = Field(None, description="Accurate WGS84 ellipsoidal geodesic measurement")
     status: str = Field(..., description="Calculation status: CALCULATED, NOT_APPLICABLE, UNSUPPORTED, or ERROR")
     message: str | None = Field(None, description="Additional context or reason if not calculated")
 
@@ -42,6 +45,8 @@ class FeatureMeasurementItem(BaseModel):
     """Feature details with geometry, properties, and measurement."""
 
     feature_index: int = Field(..., description="0-based index of feature in dataset")
+    feature_id: int | str = Field(..., description="Feature ID or index identifier")
+    id: int | str = Field(..., description="Direct alias for feature ID")
     geometry_type: str = Field(..., description="Geometry type (e.g. Polygon, LineString, Point)")
     geometry: dict[str, Any] = Field(..., description="GeoJSON geometry representation")
     crs: str = Field(..., description="Original CRS of the geometry")
@@ -60,6 +65,8 @@ class MeasurementSummary(BaseModel):
     unsupported_count: int = 0
     total_area_sq_meters: float = 0.0
     total_length_meters: float = 0.0
+    total_area: float = 0.0
+    total_length: float = 0.0
     total_area_hectares: float = 0.0
     total_length_km: float = 0.0
 

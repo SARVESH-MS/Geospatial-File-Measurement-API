@@ -1,13 +1,17 @@
-"""Measurement calculation service for geospatial geometries."""
+"""Measurement calculation service for geospatial geometries with UTM and Geodesic support."""
 
 import logging
 from typing import Any
+import pyproj
 import shapely
 
 from app.schemas.file_schemas import MeasurementDetail
 from app.services.crs_service import CRSService
 
 logger = logging.getLogger(__name__)
+
+# WGS84 Geodetic calculator for ellipsoidal reference cross-validation
+wgs84_geod = pyproj.Geod(ellps="WGS84")
 
 
 class MeasurementService:
@@ -30,6 +34,9 @@ class MeasurementService:
                     value=None,
                     unit=None,
                     display=None,
+                    area=None,
+                    length=None,
+                    geodesic_value=None,
                     status="NOT_APPLICABLE",
                     message="Geometry is empty or null.",
                 ),
@@ -47,6 +54,9 @@ class MeasurementService:
                     value=None,
                     unit=None,
                     display="N/A",
+                    area=None,
+                    length=None,
+                    geodesic_value=None,
                     status="NOT_APPLICABLE",
                     message="Points have zero dimensions; no area or length measurement is required.",
                 ),
@@ -63,6 +73,19 @@ class MeasurementService:
                 hectares = round(area_sq_m / 10_000.0, 4)
                 sq_km = round(area_sq_m / 1_000_000.0, 6)
 
+                # Optional Geodesic calculation on WGS84 geometry
+                geodesic_area: float | None = None
+                try:
+                    wgs_geom = (
+                        CRSService.transform_to_crs(geometry, source_crs, "EPSG:4326")
+                        if source_crs != "EPSG:4326"
+                        else geometry
+                    )
+                    g_area, _ = wgs84_geod.geometry_area_perimeter(wgs_geom)
+                    geodesic_area = round(abs(float(g_area)), 4)
+                except Exception as e:
+                    logger.debug("Geodesic area calculation skipped: %s", e)
+
                 display_str = f"{area_sq_m:,.2f} m²"
                 if area_sq_m >= 10_000:
                     display_str += f" ({hectares:,.2f} ha)"
@@ -76,6 +99,9 @@ class MeasurementService:
                         value=area_sq_m,
                         unit="square_meters",
                         display=display_str,
+                        area=area_sq_m,
+                        length=None,
+                        geodesic_value=geodesic_area,
                         status="CALCULATED",
                         message=None,
                     ),
@@ -90,6 +116,9 @@ class MeasurementService:
                         value=None,
                         unit=None,
                         display=None,
+                        area=None,
+                        length=None,
+                        geodesic_value=None,
                         status="ERROR",
                         message=f"Measurement calculation failed: {str(e)}",
                     ),
@@ -105,6 +134,18 @@ class MeasurementService:
                 length_m = round(float(projected_geom.length), 4)
                 length_km = round(length_m / 1000.0, 4)
 
+                # Optional Geodesic calculation on WGS84 geometry
+                geodesic_len: float | None = None
+                try:
+                    wgs_geom = (
+                        CRSService.transform_to_crs(geometry, source_crs, "EPSG:4326")
+                        if source_crs != "EPSG:4326"
+                        else geometry
+                    )
+                    geodesic_len = round(float(wgs84_geod.geometry_length(wgs_geom)), 4)
+                except Exception as e:
+                    logger.debug("Geodesic length calculation skipped: %s", e)
+
                 display_str = f"{length_m:,.2f} m"
                 if length_m >= 1000:
                     display_str += f" ({length_km:,.2f} km)"
@@ -116,6 +157,9 @@ class MeasurementService:
                         value=length_m,
                         unit="meters",
                         display=display_str,
+                        area=None,
+                        length=length_m,
+                        geodesic_value=geodesic_len,
                         status="CALCULATED",
                         message=None,
                     ),
@@ -130,6 +174,9 @@ class MeasurementService:
                         value=None,
                         unit=None,
                         display=None,
+                        area=None,
+                        length=None,
+                        geodesic_value=None,
                         status="ERROR",
                         message=f"Measurement calculation failed: {str(e)}",
                     ),
@@ -144,6 +191,9 @@ class MeasurementService:
                 value=None,
                 unit=None,
                 display=None,
+                area=None,
+                length=None,
+                geodesic_value=None,
                 status="UNSUPPORTED",
                 message=f"Geometry type '{geom_type}' is not supported for standard measurement calculation.",
             ),

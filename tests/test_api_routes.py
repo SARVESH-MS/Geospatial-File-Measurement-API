@@ -71,24 +71,32 @@ def test_upload_and_measure_kml_flow(client: TestClient, sample_kml_path: Path):
     assert summary["point_count"] == 1
     assert summary["total_area_sq_meters"] > 0
     assert summary["total_length_meters"] > 0
+    assert summary["total_area"] == summary["total_area_sq_meters"]
+    assert summary["total_length"] == summary["total_length_meters"]
 
     # Verify features and measurements
     features_by_type = {f["geometry_type"]: f for f in meas_data["features"]}
 
     # Polygon has area
     poly_feat = features_by_type["Polygon"]
+    assert poly_feat["feature_id"] is not None
+    assert poly_feat["id"] is not None
     assert poly_feat["measurement"]["supported"] is True
     assert poly_feat["measurement"]["type"] == "area"
     assert poly_feat["measurement"]["unit"] == "square_meters"
     assert poly_feat["measurement"]["value"] > 0
+    assert poly_feat["measurement"]["area"] == poly_feat["measurement"]["value"]
     assert poly_feat["projected_crs"] == "EPSG:32643"  # Converted to UTM 43N
 
     # LineString has length
     line_feat = features_by_type["LineString"]
+    assert line_feat["feature_id"] is not None
+    assert line_feat["id"] is not None
     assert line_feat["measurement"]["supported"] is True
     assert line_feat["measurement"]["type"] == "length"
     assert line_feat["measurement"]["unit"] == "meters"
     assert line_feat["measurement"]["value"] > 0
+    assert line_feat["measurement"]["length"] == line_feat["measurement"]["value"]
 
     # Point has no measurement (graceful handling)
     point_feat = features_by_type["Point"]
