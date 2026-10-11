@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Survey Site Alpha</name>
+    <description>Drone survey sample dataset containing boundary, flight paths, and survey markers</description>
+    
+    <!-- Feature 1: Agricultural Parcel Boundary (Polygon) -->
+    <Placemark>
+      <name>Parcel 101 - Agricultural Boundary</name>
+      <description>Zoned agricultural property boundary for drone surveying</description>
+      <ExtendedData>
+        <Data name="parcel_id">
+          <value>AP-2024-001</value>
+        </Data>
+        <Data name="owner">
+          <value>Aereo Agri Holdings</value>
+        </Data>
+        <Data name="crop_type">
+          <value>Wheat</value>
+        </Data>
+      </ExtendedData>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              77.5900,12.9700,0
+              77.5950,12.9700,0
+              77.5950,12.9740,0
+              77.5900,12.9740,0
+              77.5900,12.9700,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+
+    <!-- Feature 2: Flight Path / Access Corridor (LineString) -->
+    <Placemark>
+      <name>Corridor Alpha - Flight Path</name>
+      <description>Linear survey corridor flown by UAV</description>
+      <ExtendedData>
+        <Data name="corridor_id">
+          <value>FP-01</value>
+        </Data>
+        <Data name="flight_speed_mps">
+          <value>12.5</value>
+        </Data>
+      </ExtendedData>
+      <LineString>
+        <coordinates>
+          77.5905,12.9705,50
+          77.5925,12.9720,50
+          77.5945,12.9735,50
+        </coordinates>
+      </LineString>
+    </Placemark>
+
+    <!-- Feature 3: Ground Control Point (Point) -->
+    <Placemark>
+      <name>GCP 01 - Survey Station</name>
+      <description>High precision RTK-calibrated base benchmark</description>
+      <ExtendedData>
+        <Data name="station_id">
+          <value>GCP-01</value>
+        </Data>
+        <Data name="accuracy_mm">
+          <value>15</value>
+        </Data>
+      </ExtendedData>
+      <Point>
+        <coordinates>
+          77.5920,12.9715,920
+        </coordinates>
+      </Point>
+    </Placemark>
+
+  </Document>
+</kml>
